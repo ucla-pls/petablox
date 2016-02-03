@@ -1,0 +1,14 @@
+allIM(i,m) <- virtIM(i,m).
+allIM(i,m) <- statIM(i,m).
+allIM(i,m) <- specIM(i,m).
+
+CallEdge(m,n) <- MI(m,i), allIM(i,n).
+
+Source(m) <- CallEdge(m,n), SourceSeed(n).
+// Source(m) <- Source(n), CallEdge(n,m).
+Source(m) <- CallEdge(m,n), Source(n).
+
+Sink(m) <- CallEdge(m,n), SinkSeed(n).
+Sink(m) <- CallEdge(m,n), Sink(n).
+
+Instrumented(m) <- Source(m), Sink(m).
