@@ -1,0 +1,5 @@
+/*
+ * TaintedVar(v) -> V(v).
+ *   v is a variable that is tainted at some point of the program
+ */
+TaintedVar(v) <- 
