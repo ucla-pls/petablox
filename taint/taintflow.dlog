@@ -1,0 +1,11 @@
+# Author: Joe Cox (cox@cs.ucla.edu)
+# name=taintflow-dlog
+
+.include "X.dom"
+.include "M.dom"
+
+###
+# Relations
+###
+
+MprimVarAsgnInst(m:M0,x1:X0,x2:X1) input
