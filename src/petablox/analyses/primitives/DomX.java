@@ -20,15 +20,7 @@ import petablox.util.Utils;
 import petablox.util.soot.SootUtilities;
 
 /**
- * Domain of local variables of primitive type.
- * <p>
- * Each local variable declared in each block of each method is represented by a unique element in this domain.
- * Local variables that have the same name but are declared in different methods or in different blocks of the
- * same method are represented by different elements in this domain.
- * <p>
- * The set of local variables of a method is the disjoint union of its argument variables and its temporaries.
- * All local variables of the same method are assigned contiguous indices in this domain.  The argument variables
- * are assigned contiguous indices in order followed by the temporaries.
+ * Domain of local variables of any type.
  * 
  * @author Joe Cox (cox@cs.ucla.edu)
  */
@@ -57,10 +49,8 @@ public class DomX extends ProgramDom<Local> implements IMethodVisitor {
         Iterator<Local> itr = SootUtilities.getLocals(m).iterator();
         while (itr.hasNext()) {
         	Local x = itr.next();
-        	if (x.getType() instanceof PrimType) {
-        		varToMethodMap.put(x, m);
-            	add(x);
-        	}
+    		varToMethodMap.put(x, m);
+        	add(x);
         }
     }
 

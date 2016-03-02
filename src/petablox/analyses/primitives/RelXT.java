@@ -40,9 +40,7 @@ public class RelXT extends ProgramRel implements IMethodVisitor {
         while (itr.hasNext()) {
         	Local l = itr.next();
         	Type t = l.getType();
-        	if (t instanceof PrimType) {
-        		add(l,t);
-        	}
+    		add(l,t);
         }
     }
 }
