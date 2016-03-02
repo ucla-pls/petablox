@@ -1,11 +1,27 @@
+# Taint flow analysis
+
 # Author: Joe Cox (cox@cs.ucla.edu)
 # name=taintflow-dlog
 
 .include "X.dom"
 .include "M.dom"
 
+.bddvarorder X0xM0
+
 ###
 # Relations
 ###
 
-MprimVarAsgnInst(m:M0,x1:X0,x2:X1) input
+MVarAsgnInst(m:M0,x1:X0,x2:X1) input
+
+untainted(x:X0) output
+tainted(x:X0) output
+tracked(m:M0) output
+
+###
+# Constraints
+###
+
+# Assignment: x = y;
+untainted(x) :- untainted(y), MVarAsgnInst(_,x,y).
+tainted(x) :- tainted(y), MVarAsgnInst(_,x,y).
