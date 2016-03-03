@@ -4,7 +4,9 @@
 # name=taintflow-dlog
 
 .include "X.dom"
+.include "I.dom"
 .include "M.dom"
+.include "Z.dom"
 
 .bddvarorder X0xM0
 
@@ -12,16 +14,21 @@
 # Relations
 ###
 
-MVarAsgnInst(m:M0,x1:X0,x2:X1) input
+MXVarAsgnInst(m:M0,x1:X0,x2:X1) input
+IinvkXArg(i:I0,z:Z0,x:X0) input
+MmethXArg(m:M0,z:Z0,x:X0) input
 
-untainted(x:X0) output
+# untainted(x:X0) output
 tainted(x:X0) output
-tracked(m:M0) output
+# tracked(m:M0) output
 
 ###
 # Constraints
 ###
 
 # Assignment: x = y;
-untainted(x) :- untainted(y), MVarAsgnInst(_,x,y).
-tainted(x) :- tainted(y), MVarAsgnInst(_,x,y).
+# untainted(x) :- untainted(y), MXVarAsgnInst(_,x,y).
+tainted(x) :- tainted(y), MXVarAsgnInst(_,x,y).
+
+# Invocation
+tainted(x) :- MmethXArg(m,z,x), IM(i,m), IinvkXArg(i,z,y), tainted(y).
