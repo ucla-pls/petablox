@@ -16,6 +16,7 @@
 
 MXVarAsgnInst(m:M0,x1:X0,x2:X1) input
 IinvkXArg(i:I0,z:Z0,x:X0) input
+IinvkXRet(i:I0,z:Z0,x:X0) input
 MmethXArg(m:M0,z:Z0,x:X0) input
 
 taintSrc(m:M0) input
@@ -34,3 +35,6 @@ tainted(x) :- tainted(y), MXVarAsgnInst(_,x,y).
 
 # Invocation
 tainted(x) :- MmethXArg(m,z,x), IM(i,m), IinvkXArg(i,z,y), tainted(y).
+
+# Return from tainted src
+tainted(x) :- taintSrc(m), IinvkXRet(i,_,x), IM(i,m).
