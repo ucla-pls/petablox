@@ -6,7 +6,7 @@ import soot.Unit;
 import soot.Local;
 import soot.Value;
 import petablox.analyses.invk.DomI;
-import petablox.analyses.var.DomV;
+import petablox.analyses.primitives.DomX;
 import petablox.project.Petablox;
 import petablox.project.analyses.ProgramRel;
 import petablox.util.soot.SootUtilities;
@@ -26,7 +26,7 @@ public class RelIinvkXArg extends ProgramRel {
     @Override
     public void fill() {
         DomI domI = (DomI) doms[0];
-        DomV domV = (DomV) doms[2];
+        DomX domX = (DomX) doms[2];
         int numI = domI.size();
         for (int iIdx = 0; iIdx < numI; iIdx++) {
             Unit u = (Unit) domI.get(iIdx);
@@ -37,12 +37,12 @@ public class RelIinvkXArg extends ProgramRel {
             }
             int numArgs = l.size();
             for (int zIdx = 0; zIdx < numArgs; zIdx++) {
-                Value v=l.get(zIdx);
-                if (v instanceof Local) {
-                	Local r = (Local)v;
-                    int vIdx = domV.indexOf(r);
-                    assert (vIdx >= 0);
-                    add(iIdx, zIdx, vIdx);
+                Value x=l.get(zIdx);
+                if (x instanceof Local) {
+                	Local r = (Local)x;
+                    int xIdx = domX.indexOf(r);
+                    assert (xIdx >= 0);
+                    add(iIdx, zIdx, xIdx);
                 }
             }
         }
