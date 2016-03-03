@@ -20,7 +20,7 @@ import petablox.util.soot.SootUtilities;
  */
 @Petablox(
     name = "IinvkXArg",
-    sign = "I0,Z0,X1:I0_X1_Z0"
+    sign = "I0,Z0,X0:I0_X0_Z0"
 )
 public class RelIinvkXArg extends ProgramRel {
     @Override

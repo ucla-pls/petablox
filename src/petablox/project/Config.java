@@ -170,6 +170,9 @@ public class Config {
         Utils.mkdirs(bddbddbWorkDirName);
         Utils.mkdirs(logicbloxWorkDirName);
     }
+    
+    // special analysis-specific properties
+    public final static String taintSrcFile = System.getProperty("petablox.special.taintflow", "");
 
     // commonly-used constants
 
