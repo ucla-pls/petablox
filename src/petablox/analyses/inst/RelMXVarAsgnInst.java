@@ -5,8 +5,6 @@ import soot.SootClass;
 import soot.SootMethod;
 import soot.Unit;
 import soot.Value;
-import soot.jimple.Constant;
-import soot.jimple.internal.JNewExpr;
 import soot.jimple.internal.JAssignStmt;
 import soot.jimple.internal.JCastExpr;
 import soot.shimple.internal.SPhiExpr;
@@ -14,7 +12,6 @@ import soot.toolkits.scalar.ValueUnitPair;
 
 import java.util.List;
 
-import petablox.program.visitors.IInstVisitor;
 import petablox.program.visitors.ICastInstVisitor;
 import petablox.program.visitors.IMoveInstVisitor;
 import petablox.program.visitors.IPhiInstVisitor;
@@ -31,8 +28,8 @@ import petablox.util.soot.SootUtilities;
  * @author Mayur Naik (mhn@cs.stanford.edu)
  * @author Joe Cox (cox@cs.ucla.edu)
  */
-@Petablox(name = "MVarAsgnInst", sign = "M0,X0,X1:M0_X0xX1")
-public class RelMVarAsgnInst extends ProgramRel implements IMoveInstVisitor, IPhiInstVisitor, ICastInstVisitor {
+@Petablox(name = "MXVarAsgnInst", sign = "M0,X0,X1:M0_X0xX1")
+public class RelMXVarAsgnInst extends ProgramRel implements IMoveInstVisitor, IPhiInstVisitor, ICastInstVisitor {
     private SootMethod ctnrMethod;
     public void visit(SootClass c) { }
     public void visit(SootMethod m) {
