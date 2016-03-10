@@ -28,15 +28,21 @@ import petablox.util.soot.SootUtilities;
 public class DomX extends ProgramDom<Local> implements IMethodVisitor {
     protected DomM domM;
     protected Map<Local, SootMethod> varToMethodMap;
+    protected Map<String, Local> uniqueStrMap;
 
     public SootMethod getMethod(Local x) {
         return varToMethodMap.get(x);
+    }
+    
+    public Local getLocalFromUniqueStr(String s) {
+        return uniqueStrMap.get(s);
     }
 
     @Override
     public void init() {
         domM = (DomM) (Config.classic ? ClassicProject.g().getTrgt("M") : consumes[0]);
         varToMethodMap = new HashMap<Local, SootMethod>();
+        uniqueStrMap = new HashMap<String, Local>();
     }
 
     @Override
@@ -50,6 +56,7 @@ public class DomX extends ProgramDom<Local> implements IMethodVisitor {
         while (itr.hasNext()) {
         	Local x = itr.next();
     		varToMethodMap.put(x, m);
+            uniqueStrMap.put(toUniqueString(x), x);
         	add(x);
         }
     }
