@@ -17,6 +17,8 @@
 ###
 
 MXVarAsgnInst(m:M0,x1:X0,x2:X1) input
+MputInstFldInstX(m:M0,v:V0,f:F0,x:X0) input
+MputStatFldInstX(m:M0,f:F0,x:X0) input
 IinvkXArg(i:I0,z:Z0,x:X0) input
 IinvkXArg0(i:I0,x:X0) input
 IinvkXRet(i:I0,z:Z0,x:X0) input
@@ -27,6 +29,8 @@ XV(x:X0,v:V0) input
 
 taintSrc(m:M0) input
 
+MputFldInstX(f:F0,x:X0) output
+MgetFldInstX(x:X0,f:F0) output
 # untainted(x:X0) output
 taintedX(x:X0) output
 # taintedF(f:F0) output
@@ -39,6 +43,21 @@ taintedX(x:X0) output
 # Assignment: x = y;
 # untainted(x) :- untainted(y), MXVarAsgnInst(_,x,y).
 taintedX(x) :- taintedX(y), MXVarAsgnInst(_,x,y).
+
+# Helpers
+MputFldInstX(f,x) :- MputInstFldInstX(_,_,f,x).
+MputFldInstX(f,x) :- MputStatFldInstX(_,f,x).
+MgetFldInstX(x,f) :- MgetInstFldInstX(_,x,_,f).
+MgetFldInstX(x,f) :- MgetStatFldInstX(_,x,f).
+
+# Assignment: b.f = x
+taintedF(f) :- MputFldInstX(f,x), taintedX(x).
+
+# Assignment: x = b.f
+taintedX(x) :- MgetFldInstX(x,f), taintedF(f).
+
+# Assignment: b.f = c.f
+# ...
 
 # Passing taint as an argument
 taintedX(x) :- MmethXArg(m,z,x), IM(i,m), IinvkXArg(i,z,y), taintedX(y).
