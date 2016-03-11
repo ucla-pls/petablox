@@ -19,6 +19,8 @@
 MXVarAsgnInst(m:M0,x1:X0,x2:X1) input
 MputInstFldInstX(m:M0,v:V0,f:F0,x:X0) input
 MputStatFldInstX(m:M0,f:F0,x:X0) input
+MgetInstFldInstX(m:M0,x:X0,v:V0,f:F0) input
+MgetStatFldInstX(m:M0,x:X0,f:F0) input
 IinvkXArg(i:I0,z:Z0,x:X0) input
 IinvkXArg0(i:I0,x:X0) input
 IinvkXRet(i:I0,z:Z0,x:X0) input
@@ -33,7 +35,7 @@ MputFldInstX(f:F0,x:X0) output
 MgetFldInstX(x:X0,f:F0) output
 # untainted(x:X0) output
 taintedX(x:X0) output
-# taintedF(f:F0) output
+taintedF(f:F0) output
 # tracked(m:M0) output
 
 ###
