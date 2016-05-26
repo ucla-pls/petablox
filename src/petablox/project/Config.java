@@ -172,7 +172,8 @@ public class Config {
     }
     
     // special analysis-specific properties
-    public final static String taintSrcFile = System.getProperty("petablox.special.taintflow", "");
+    public final static String taintSrcFile = System.getProperty("petablox.special.taintsrc", "");
+    public final static String taintSinkFile = System.getProperty("petablox.special.taintsink", "");
 
     // commonly-used constants
 

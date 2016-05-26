@@ -14,22 +14,22 @@ import petablox.project.PetabloxException;
 import petablox.project.analyses.ProgramRel;
 
 /**
- * Relation containing all methods marked as tainted sources by the user.
+ * Relation containing all methods marked as tainted sinks by the user.
  *
  * @author Joe Cox (cox@cs.ucla.edu)
  */
 @Petablox(
-    name = "taintSrc",
+    name = "taintSink",
     sign = "M0"
 )
-public class RelTaintSrc extends ProgramRel implements IMethodVisitor {
+public class RelTaintSink extends ProgramRel implements IMethodVisitor {
     private ArrayList<String> methodDescriptors;
-    public RelTaintSrc() {
+    public RelTaintSink() {
         try {
-            if (Config.taintSrcFile.equals("")) {
-                throw new PetabloxException("Taint source file is required to build taintSrc relation");
+            if (Config.taintSinkFile.equals("")) {
+                throw new PetabloxException("Taint sink file is required to build taintSink relation");
             } else {
-                String file = Config.workDirName + File.separator + Config.taintSrcFile;
+                String file = Config.workDirName + File.separator + Config.taintSinkFile;
                 BufferedReader reader = new BufferedReader(new FileReader(file));
                 methodDescriptors = new ArrayList<String>();
                 String line = null;

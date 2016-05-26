@@ -3,34 +3,45 @@
 # Author: Joe Cox (cox@cs.ucla.edu)
 # name=taintflow-dlog
 
+#.include "Const.dom"
 .include "F.dom"
+.include "H.dom"
 .include "I.dom"
 .include "M.dom"
 .include "V.dom"
 .include "X.dom"
 .include "Z.dom"
 
-.bddvarorder I0xM0_X0xX1_Z0_V0_F0
+.bddvarorder I0xM0xM1_X0xX1_Z0_V0_F0_H0
 
 ###
 # Relations
 ###
 
 MXVarAsgnInst(m:M0,x1:X0,x2:X1) input
+MXAsgnConst(m:M0,x:X0) input
 MputInstFldInstX(m:M0,v:V0,f:F0,x:X0) input
 MputStatFldInstX(m:M0,f:F0,x:X0) input
 MgetInstFldInstX(m:M0,x:X0,v:V0,f:F0) input
 MgetStatFldInstX(m:M0,x:X0,f:F0) input
+MputInstFldInstConst(m:M0,v:V0,f:F0) input
+MputStatFldInstConst(m:M0,f:F0) input
 IinvkXArg(i:I0,z:Z0,x:X0) input
+IinvkConstArg(i:I0,z:Z0) input
 IinvkXRet(i:I0,z:Z0,x:X0) input
 MmethXArg(m:M0,z:Z0,x:X0) input
 MmethXRet(m:M0,z:Z0,x:X0) input
 IM(i:I0,m:M0) input
+MM(m0:M0,m1:M1) input
 thisMV(m:M0,v:V0) input
 XV(x:X0,v:V0) input
 MX(m:M0,x:X0) input
+MobjValAsgnInst(m:M0,v:V0,h:H0) input
+nativeM(m:M0) input
+arraycopyM(m:M0) input
 
 taintSrc(m:M0) input
+taintSink(m:M0) input
 
 MputFldInstX(f:F0,x:X0) output
 MgetFldInstX(x:X0,f:F0) output
@@ -38,23 +49,26 @@ untaintedX(x:X0) output
 taintedX(x:X0) output
 untaintedF(f:F0) output
 taintedF(f:F0) output
-# tracked(m:M0) output
+tracked(m:M0) output
+untracked(m:M0) output
 
 ###
 # Constraints
 ###
-
-# Assignment: x = y;
-taintedX(x) :- taintedX(y), MXVarAsgnInst(_,x,y).
-untaintedX(x) :- untaintedX(y), MXVarAsgnInst(_,x,y).
 
 # Helpers
 MputFldInstX(f,x) :- MputInstFldInstX(_,_,f,x).
 MputFldInstX(f,x) :- MputStatFldInstX(_,f,x).
 MgetFldInstX(x,f) :- MgetInstFldInstX(_,x,_,f).
 MgetFldInstX(x,f) :- MgetStatFldInstX(_,x,f).
+MputFldInstConst(f) :- MputInstFldInstConst(_,_,f).
+MputFldInstConst(f) :- MputStatFldInstConst(_,f).
 
-# Assignment: b.f = x (also handles b.f = c.g)
+# Assignment: x = y;
+taintedX(x) :- taintedX(y), MXVarAsgnInst(_,x,y).
+untaintedX(x) :- untaintedX(y), MXVarAsgnInst(_,x,y).
+
+# Assignment: b.f = x (also handles b.f = c.g?)
 taintedF(f) :- MputFldInstX(f,x), taintedX(x).
 untaintedF(f) :- MputFldInstX(f,x), untaintedX(x).
 
@@ -62,20 +76,58 @@ untaintedF(f) :- MputFldInstX(f,x), untaintedX(x).
 taintedX(x) :- MgetFldInstX(x,f), taintedF(f).
 untaintedX(x) :- MgetFldInstX(x,f), untaintedF(f).
 
-# Passing taint as an argument
+# Assignment: local/field assigned constant
+untaintedX(x) :- MXAsgnConst(_,x).
+untaintedF(f) :- MputFldInstConst(f).
+
+# Return into local
+taintedX(x) :- IinvkXRet(i,z,x), IM(i,m), MmethXRet(m,z,y), taintedX(y).
+untaintedX(x) :- IinvkXRet(i,z,x), IM(i,m), MmethXRet(m,z,y), untaintedX(y), !taintSrc(m).
+
+# Return into field handled, returns into local var and is handled by assignment
+
+# Passing local as an argument
 taintedX(x) :- MmethXArg(m,z,x), IM(i,m), IinvkXArg(i,z,y), taintedX(y).
 untaintedX(x) :- MmethXArg(m,z,x), IM(i,m), IinvkXArg(i,z,y), untaintedX(y).
 
-# "this" of caller is tainted if callee object is tainted
-taintedX(x) :- thisMV(m,v), XV(x,v), IM(i,m), IinvkXArg(i,0,y), taintedX(y).
-untaintedX(x) :- thisMV(m,v), XV(x,v), IM(i,m), IinvkXArg(i,0,y), untaintedX(y).
+# Passing field as an argument handled
+# Passing return as an argument handled
 
-# Return value is tainted
-taintedX(x) :- IinvkXRet(i,z,x), IM(i,m), MmethXRet(m,z,y), taintedX(y).
-untaintedX(x) :- IinvkXRet(i,z,x), IM(i,m), MmethXRet(m,z,y), untaintedX(y).
+# Passing constant as an argument
+untaintedX(x) :- MmethXArg(m,z,x), IM(i,m), IinvkConstArg(i,z).
 
-# Return from tainted src
+# caller object is tainted if callee 'this' is tainted
+#taintedX(x) :- IinvkXArg(i,0,x), IM(i,m), thisMV(m,v), XV(y,v), taintedX(y).
+#untaintedX(x) :- IinvkXArg(i,0,x), IM(i,m), thisMV(m,v), XV(y,v), untaintedX(y).
+
+# 'this' of caller is tainted if callee object is tainted
+#taintedX(x) :- thisMV(m,v), XV(x,v), MM(m,n), IM(i,n), IinvkXArg(i,0,y), taintedX(y).
+#untaintedX(x) :- thisMV(m,v), XV(x,v), MM(m,n), IM(i,n), IinvkXArg(i,0,y), untaintedX(y).
+
+# 'this' inside callee is tainted if callee object is tainted
+#taintedX(x) :- thisMV(m,v), XV(x,v), IM(i,m), IinvkXArg(i,0,y), taintedX(y).
+#untaintedX(x) :- thisMV(m,v), XV(x,v), IM(i,m), IinvkXArg(i,0,y), untaintedX(y).
+
+# Return from tainted src into local
 taintedX(x) :- taintSrc(m), IinvkXRet(i,_,x), IM(i,m).
+
+# Return from tainted src into field put into local var, handled by assignment
+
+# Mark 'new' stmts as untainted
+untaintedX(x) :- XV(x,v), MobjValAsgnInst(_,v,_).
+# new stmts into fields handled
+
+# native non-arraycopy
+taintedX(x) :- MmethXRet(m,z,x), nativeM(m), IM(i,m), IinvkXArg(i,z,y), taintedX(y).
+untaintedX(x) :- MmethXRet(m,_,x), nativeM(m), !taintedX(x).
+
+# native arraycopy
+taintedX(x) :- arraycopyM(m), IM(i,m), IinvkXArg(i,1,y), IinvkXArg(i,3,x), taintedX(y).
+untaintedX(x) :- arraycopyM(m), IM(i,m), IinvkXArg(i,1,y), IinvkXArg(i,3,x), untaintedX(y).
 
 # Rules for tracking methods
 tracked(m) :- MX(m,x), taintedX(x), untaintedX(x).
+# Need something for fields
+
+tracked(m) :- MM(m,n), taintSink(n).
+untracked(m) :- !tracked(m).

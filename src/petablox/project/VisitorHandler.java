@@ -24,6 +24,7 @@ import petablox.util.soot.ICFG;
 import petablox.util.soot.SootUtilities;
 import soot.ArrayType;
 import soot.Local;
+import soot.Immediate;
 import soot.NullType;
 import soot.RefLikeType;
 import soot.RefType;
@@ -134,7 +135,7 @@ public class VisitorHandler {
                                     niv.visitNewInst(q);
                             }
                     	}else if(j.leftBox.getValue() instanceof Local &&
-                    			j.rightBox.getValue() instanceof Local){
+                    			j.rightBox.getValue() instanceof Immediate){
                     		if (mivs != null) {
                                 for (IMoveInstVisitor miv : mivs)
                                     miv.visitMoveInst(q);
