@@ -1,5 +1,0 @@
-sourceseed_string(s) -> string(s).
-sinkseed_string(s) -> string(s).
-
-SourceSeed(m) <- M_string[m] = s, sourceseed_string(s).
-SinkSeed(m) <- M_string[m] = s, sinkseed_string(s).
