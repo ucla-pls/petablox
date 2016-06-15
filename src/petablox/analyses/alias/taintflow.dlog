@@ -129,7 +129,10 @@ untaintedX(x) :- XV(x,v), MobjValAsgnInst(_,v,_).
 
 # native non-arraycopy
 taintedX(x) :- IinvkXRet(i,_,x), nativeM(m), IM(i,m), IinvkXArg(i,_,y), taintedX(y).
-untaintedX(x) :- !(IinvkXRet(i,_,x), nativeM(m), IM(i,m), IinvkXArg(i,_,y), !untaintedX(y)).
+
+notTainted(x:X0)
+notTainted(x) :- IinvkXRet(i,_,x), nativeM(m), IM(i,m), IinvkXArg(i,_,y), !untaintedX(y).
+untaintedX(x) :- !notTainted(x).
 
 # native arraycopy
 taintedX(x) :- arraycopyM(m), IM(i,m), IinvkXArg(i,1,y), IinvkXArg(i,3,x), taintedX(y).
@@ -159,4 +162,6 @@ untaintedArg(m,n,z) :- untracked(m), tracked(n),
 taintedFieldRead(m,f) :- tracked(m), MgetInstFldInstX(m,_,_,f), alwaysTaintedF(f).
 taintedFieldRead(m,f) :- tracked(m), MgetStatFldInstX(m,_,f), alwaysTaintedF(f).
 
-alwaysTaintedRet(m,n) :- tracked(m), untracked(n), IM(i,n), MI(m,i), !(IinvkXRet(i,_,x), !alwaysTaintedX(x)).
+untaintedRet(i:I0)
+untaintedRet(i) :- IinvkRet(i,_,x), !alwaysTaintedX(x).
+alwaysTaintedRet(m,n) :- tracked(m), untracked(n), IM(i,n), MI(m,i), !untaintedRet(i).
