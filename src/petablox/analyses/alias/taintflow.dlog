@@ -32,6 +32,7 @@ IinvkXRet(i:I0,z:Z0,x:X0) input
 MmethXArg(m:M0,z:Z0,x:X0) input
 MmethXRet(m:M0,z:Z0,x:X0) input
 IM(i:I0,m:M0) input
+MI(m:M0,i:I0) input
 MM(m0:M0,m1:M1) input
 thisMV(m:M0,v:V0) input
 XV(x:X0,v:V0) input
@@ -51,6 +52,15 @@ untaintedF(f:F0) output
 taintedF(f:F0) output
 tracked(m:M0) output
 untracked(m:M0) output
+
+alwaysTaintedX(x:X0) output
+neverTaintedX(x:X0) output
+alwaysTaintedF(f:F0) output
+neverTaintedF(f:F0) output
+taintedArg(m:M0,n:M1,z:Z0) output
+untaintedArg(m:M0,n:M1,z:Z0) output
+taintedFieldRead(m:M0,f:F0) output
+alwaysTaintedRet(m:M0,n:M1) output
 
 ###
 # Constraints
@@ -118,8 +128,8 @@ untaintedX(x) :- XV(x,v), MobjValAsgnInst(_,v,_).
 # new stmts into fields handled
 
 # native non-arraycopy
-taintedX(x) :- MmethXRet(m,z,x), nativeM(m), IM(i,m), IinvkXArg(i,z,y), taintedX(y).
-untaintedX(x) :- MmethXRet(m,_,x), nativeM(m), !taintedX(x).
+taintedX(x) :- IinvkXRet(i,_,x), nativeM(m), IM(i,m), IinvkXArg(i,_,y), taintedX(y).
+untaintedX(x) :- !(IinvkXRet(i,_,x), nativeM(m), IM(i,m), IinvkXArg(i,_,y), !untaintedX(y)).
 
 # native arraycopy
 taintedX(x) :- arraycopyM(m), IM(i,m), IinvkXArg(i,1,y), IinvkXArg(i,3,x), taintedX(y).
@@ -127,7 +137,26 @@ untaintedX(x) :- arraycopyM(m), IM(i,m), IinvkXArg(i,1,y), IinvkXArg(i,3,x), unt
 
 # Rules for tracking methods
 tracked(m) :- MX(m,x), taintedX(x), untaintedX(x).
-# Need something for fields
 
 tracked(m) :- MM(m,n), taintSink(n).
 untracked(m) :- !tracked(m).
+
+# For Jon Bell
+alwaysTaintedX(x) :- taintedX(x), !untaintedX(x).
+neverTaintedX(x) :- !taintedX(x), untaintedX(x).
+
+alwaysTaintedF(f) :- taintedF(f), !untaintedF(f).
+neverTaintedF(f) :- !taintedF(f), untaintedF(f).
+
+taintedArg(m,n,z) :- untracked(m), tracked(n),
+		     IinvkXArg(i,z,y), IM(i,n), MI(m,i),
+		     alwaysTaintedX(y).
+
+untaintedArg(m,n,z) :- untracked(m), tracked(n),
+		       IinvkXArg(i,z,y), IM(i,n), MI(m,i),
+		       neverTaintedX(y).
+
+taintedFieldRead(m,f) :- tracked(m), MgetInstFldInstX(m,_,_,f), alwaysTaintedF(f).
+taintedFieldRead(m,f) :- tracked(m), MgetStatFldInstX(m,_,f), alwaysTaintedF(f).
+
+alwaysTaintedRet(m,n) :- tracked(m), untracked(n), IM(i,n), MI(m,i), !(IinvkXRet(i,_,x), !alwaysTaintedX(x)).
