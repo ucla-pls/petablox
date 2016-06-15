@@ -29,7 +29,15 @@ public class RelTaintSrc extends ProgramRel implements IMethodVisitor {
             if (Config.taintSrcFile.equals("")) {
                 throw new PetabloxException("Taint source file is required to build taintSrc relation");
             } else {
-                String file = Config.workDirName + File.separator + Config.taintSrcFile;
+		File f = new File(Config.taintSrcFile);
+		String file;
+		
+		if (f.getAbsolutePath().equals(Config.taintSrcFile)) {
+		    file = Config.taintSrcFile;
+		} else {
+		    file = Config.workDirName + File.separator + Config.taintSrcFile;
+		}
+		
                 BufferedReader reader = new BufferedReader(new FileReader(file));
                 methodDescriptors = new ArrayList<String>();
                 String line = null;
