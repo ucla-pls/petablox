@@ -4,6 +4,7 @@ import java.io.PrintWriter;
 import java.util.Set;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.Arrays;
 
 import soot.SootMethod;
 import soot.Unit;
@@ -101,7 +102,7 @@ public class DeadlockAnalysis extends JavaAnalysis {
         ClassicProject.g().runTask("deadlock-dlog");
 
         if (Config.printResults){}
-            //printResults();
+            printResults();
     }
 
     private CIObj getPointsTo(int lIdx) {
@@ -121,134 +122,54 @@ public class DeadlockAnalysis extends JavaAnalysis {
         
         PrintWriter out;
 
+        // relDeadlock.load();
+
+        // System.out.println(System.getProperty("user.dir"));
+        // relDeadlock.print(System.getProperty("user.dir"));
+
         relDeadlock.load();
-        relSyncLH.load();
 
-        out = OutDirUtils.newPrintWriter("deadlocklist.xml");
-        out.println("<deadlocklist>");
+        out = OutDirUtils.newPrintWriter("deadlocks.txt");
         for (Object[] tuple : relDeadlock.getAryNValTuples()) {
-            SootMethod t1Val = (SootMethod) tuple[0];
-            Unit l1Val = (Unit) tuple[1];
-            Unit l2Val = (Unit) tuple[2];
-            SootMethod t2Val = (SootMethod) tuple[3];
-            Unit l3Val = (Unit) tuple[4];
-            Unit l4Val = (Unit) tuple[5];
-            int l1 = domL.indexOf(l1Val);
-            int l2 = domL.indexOf(l2Val);
-            int l3 = domL.indexOf(l3Val);
-            int l4 = domL.indexOf(l4Val);
-            // require l1,l2 <= l3,l4 and if not switch
-            if (l1 > l3 || (l1 == l3 && l2 > l4)) {
-                {
-                    int tmp;
-                    tmp = l1; l1 = l3; l3 = tmp;
-                    tmp = l2; l2 = l4; l4 = tmp;
-                }
-                {
-                    Unit tmp;
-                    tmp = l1Val; l1Val = l3Val; l3Val = tmp;
-                    tmp = l2Val; l2Val = l4Val; l4Val = tmp;
-                }
-                {
-                    SootMethod tmp;
-                    tmp = t1Val; t1Val = t2Val; t2Val = tmp;
-                }
+            Unit [] lockA = {(Unit) tuple[1], (Unit) tuple[2]}, 
+                    lockB = {(Unit) tuple[4], (Unit) tuple[5]};
+
+            String [] lockA_str = new String [2], 
+                      lockB_str = new String [2];
+
+            for (int i = 0; i < 2; i++) { 
+                lockA_str[i] = SootUtilities.toByteLocStr(lockA[i]);
+                lockB_str[i] = SootUtilities.toByteLocStr(lockB[i]);
             }
-            int t1 = domA.indexOf(t1Val);
-            int t2 = domA.indexOf(t2Val);
-            int t1m = domM.indexOf(t1Val);
-            int t2m = domM.indexOf(t2Val);
-            SootMethod m1Val = SootUtilities.getMethod(l1Val);
-            SootMethod m2Val = SootUtilities.getMethod(l2Val);
-            SootMethod m3Val = SootUtilities.getMethod(l3Val);
-            SootMethod m4Val = SootUtilities.getMethod(l4Val);
-            int m1 = domM.indexOf(m1Val);
-            int m2 = domM.indexOf(m2Val);
-            int m3 = domM.indexOf(m3Val);
-            int m4 = domM.indexOf(m4Val);
-            CIObj o1Val = getPointsTo(l1);
-            CIObj o2Val = getPointsTo(l2);
-            CIObj o3Val = getPointsTo(l3);
-            CIObj o4Val = getPointsTo(l4);
-            int o1 = domO.getOrAdd(o1Val);
-            int o2 = domO.getOrAdd(o2Val);
-            int o3 = domO.getOrAdd(o3Val);
-            int o4 = domO.getOrAdd(o4Val);
-            addToMMmap(t1Val, m1Val);
-            addToMMmap(t2Val, m3Val);
-            addToMMmap(m1Val, m2Val);
-            addToMMmap(m3Val, m4Val);
-            out.println("<deadlock " +
-                "group=\"" + l1 + "_" + l2 + "_" + l3 + "_" + l4 + "\" " +
-                "T1id=\"A" + t1 + "\" T2id=\"A" + t2 + "\" " +
-                "M1id=\"M" + m1 + "\" L1id=\"L" + l1 + "\" O1id=\"O" + o1 + "\" " +
-                "M2id=\"M" + m2 + "\" L2id=\"L" + l2 + "\" O2id=\"O" + o2 + "\" " +
-                "M3id=\"M" + m3 + "\" L3id=\"L" + l3 + "\" O3id=\"O" + o3 + "\" " +
-                "M4id=\"M" + m4 + "\" L4id=\"L" + l4 + "\" O4id=\"O" + o4 + "\"/>");
+
+            // Sort them
+            Arrays.sort(lockA_str);
+            Arrays.sort(lockB_str);
+
+            // Sort them again
+            if ( lockA_str[0].compareTo(lockB_str[0]) > 0 
+                 || (
+                   lockA_str[0].compareTo(lockB_str[0]) == 0 &&
+                   lockA_str[1].compareTo(lockB_str[1]) > 0
+                 )
+               ) { 
+                String [] tmp = lockA_str;
+                lockA_str = lockB_str; 
+                lockB_str = tmp; 
+            }
+
+            // Print them.
+            out.print(lockA_str[0]); 
+            out.print(",");
+            out.print(lockA_str[1]); 
+            out.print(";");
+            out.print(lockB_str[0]); 
+            out.print(",");
+            out.print(lockB_str[1]); 
         }
+        
         relDeadlock.close();
-        relSyncLH.close();
-        out.println("</deadlocklist>");
         out.close();        
-        
-        IPathVisitor<SootMethod> visitor = new IPathVisitor<SootMethod>() {
-            public String visit(SootMethod srcM, SootMethod dstM) {
-                Set<Unit> insts = thrSenCICG.getLabels(srcM, dstM);
-                for (Unit inst : insts) {
-                    return "<elem Iid=\"I" + domI.indexOf(inst) + "\"/>";
-                }
-                return "";
-            }
-        };
-
-        out = OutDirUtils.newPrintWriter("MMlist.xml");
-        out.println("<MMlist>");
-        
-        for (SootMethod m1 : MMmap.keySet()) {
-            int mIdx1 = domM.indexOf(m1);
-            Set<SootMethod> mSet = MMmap.get(m1);
-            ShortestPathBuilder<SootMethod> builder = new ShortestPathBuilder(thrSenCICG, m1, visitor);
-            for (SootMethod m2 : mSet) {
-                int mIdx2 = domM.indexOf(m2);
-                out.println("<MM M1id=\"M" + mIdx1 + "\" M2id=\"M" + mIdx2 + "\">");
-                String path = builder.getShortestPathTo(m2);
-                out.println("<path>");
-                out.println(path);
-                out.println("</path>");
-                out.println("</MM>");
-            }
-        }
-        out.println("</MMlist>");
-        out.close();
-        
-        domO.saveToXMLFile();
-        domA.saveToXMLFile();
-        domH.saveToXMLFile();
-        domI.saveToXMLFile();
-        domM.saveToXMLFile();
-        domL.saveToXMLFile();
-
-        OutDirUtils.copyResourceByName("web/style.css");
-        OutDirUtils.copyResourceByName("petablox/analyses/method/Mlist.dtd");
-        OutDirUtils.copyResourceByName("petablox/analyses/method/M.xsl");
-        OutDirUtils.copyResourceByName("petablox/analyses/lock/Llist.dtd");
-        OutDirUtils.copyResourceByName("petablox/analyses/alloc/Hlist.dtd");
-        OutDirUtils.copyResourceByName("petablox/analyses/alloc/H.xsl");
-        OutDirUtils.copyResourceByName("petablox/analyses/invk/Ilist.dtd");
-        OutDirUtils.copyResourceByName("petablox/analyses/invk/I.xsl");
-        OutDirUtils.copyResourceByName("petablox/analyses/thread/Alist.dtd");
-        OutDirUtils.copyResourceByName("petablox/analyses/thread/A.xsl");
-        OutDirUtils.copyResourceByName("petablox/analyses/alias/Olist.dtd");
-        OutDirUtils.copyResourceByName("petablox/analyses/alias/O.xsl");
-        OutDirUtils.copyResourceByName("petablox/analyses/deadlock/web/results.dtd");
-        OutDirUtils.copyResourceByName("petablox/analyses/deadlock/web/results.xml");
-        OutDirUtils.copyResourceByName("petablox/analyses/deadlock/web/group.xsl");
-        OutDirUtils.copyResourceByName("petablox/analyses/deadlock/web/paths.xsl");
-
-        OutDirUtils.runSaxon("results.xml", "group.xsl");
-        OutDirUtils.runSaxon("results.xml", "paths.xsl");
-
-        Program.g().HTMLizeJavaSrcFiles();
     }
 
     private void addToMMmap(SootMethod m1, SootMethod m2) {
