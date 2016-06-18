@@ -7,3 +7,5 @@ libsrc/jasmin/lib/jasmin*
 libsrc/soot/lib/*
 libsrc/tamiflex/Booster/lib/*
 /bin/
+lib/reflection-instr.jar
+petablox_output/
