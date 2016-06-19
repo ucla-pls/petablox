@@ -1,0 +1,13 @@
+<!-- Borrowed and mudified from https://ant.apache.org/manual/tutorial-HelloWorldWithAnt.html -->
+<project>
+    <target name="compile">
+        <mkdir dir="build/classes"/>
+        <javac srcdir="src" destdir="build/classes"/>
+    </target>
+    
+    <target name="jar" depends="compile">
+        <jar destfile="build/baseline.jar" basedir="build/classes"></jar>
+    </target>
+
+</project>
+

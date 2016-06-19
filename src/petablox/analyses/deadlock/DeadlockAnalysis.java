@@ -48,7 +48,7 @@ import petablox.util.soot.SootUtilities;
  *   <li>petablox.deadlock.exclude.nongrded (default is false).</li>
  *   <li>petablox.print.results (default is false).</li>
  * </ul>
- * 
+ *
  * @author Mayur Naik (mhn@cs.stanford.edu)
  */
 @Petablox(name="deadlock-java", consumes = { "syncLH" })
@@ -74,7 +74,7 @@ public class DeadlockAnalysis extends JavaAnalysis {
         domI = (DomI) ClassicProject.g().getTrgt("I");
         domL = (DomL) ClassicProject.g().getTrgt("L");
         domM = (DomM) ClassicProject.g().getTrgt("M");
-        
+
         relDeadlock = (ProgramRel) ClassicProject.g().getTrgt("deadlock");
         relSyncLH   = (ProgramRel) ClassicProject.g().getTrgt("syncLH");
 
@@ -101,8 +101,7 @@ public class DeadlockAnalysis extends JavaAnalysis {
             ClassicProject.g().runTask("deadlock-nongrded-include-dlog");
         ClassicProject.g().runTask("deadlock-dlog");
 
-        if (Config.printResults){}
-            printResults();
+        printResults();
     }
 
     private CIObj getPointsTo(int lIdx) {
@@ -115,11 +114,8 @@ public class DeadlockAnalysis extends JavaAnalysis {
         view.free();
         return new CIObj(pts);
     }
-    
+
     private void printResults() {
-        final DomO domO = new DomO();
-        domO.setName("O");
-        
         PrintWriter out;
 
         // relDeadlock.load();
@@ -131,13 +127,13 @@ public class DeadlockAnalysis extends JavaAnalysis {
 
         out = OutDirUtils.newPrintWriter("deadlocks.txt");
         for (Object[] tuple : relDeadlock.getAryNValTuples()) {
-            Unit [] lockA = {(Unit) tuple[1], (Unit) tuple[2]}, 
+            Unit [] lockA = {(Unit) tuple[1], (Unit) tuple[2]},
                     lockB = {(Unit) tuple[4], (Unit) tuple[5]};
 
-            String [] lockA_str = new String [2], 
+            String [] lockA_str = new String [2],
                       lockB_str = new String [2];
 
-            for (int i = 0; i < 2; i++) { 
+            for (int i = 0; i < 2; i++) {
                 lockA_str[i] = SootUtilities.toByteLocStr(lockA[i]);
                 lockB_str[i] = SootUtilities.toByteLocStr(lockB[i]);
             }
@@ -147,29 +143,29 @@ public class DeadlockAnalysis extends JavaAnalysis {
             Arrays.sort(lockB_str);
 
             // Sort them again
-            if ( lockA_str[0].compareTo(lockB_str[0]) > 0 
+            if ( lockA_str[0].compareTo(lockB_str[0]) > 0
                  || (
                    lockA_str[0].compareTo(lockB_str[0]) == 0 &&
                    lockA_str[1].compareTo(lockB_str[1]) > 0
                  )
-               ) { 
+               ) {
                 String [] tmp = lockA_str;
-                lockA_str = lockB_str; 
-                lockB_str = tmp; 
+                lockA_str = lockB_str;
+                lockB_str = tmp;
             }
 
             // Print them.
-            out.print(lockA_str[0]); 
+            out.print(lockA_str[0]);
             out.print(",");
-            out.print(lockA_str[1]); 
+            out.print(lockA_str[1]);
             out.print(";");
-            out.print(lockB_str[0]); 
+            out.print(lockB_str[0]);
             out.print(",");
-            out.print(lockB_str[1]); 
+            out.print(lockB_str[1]);
         }
-        
+
         relDeadlock.close();
-        out.close();        
+        out.close();
     }
 
     private void addToMMmap(SootMethod m1, SootMethod m2) {
