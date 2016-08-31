@@ -12,6 +12,7 @@ import petablox.project.analyses.ProgramDom;
 import petablox.project.analyses.ProgramRel;
 import petablox.util.tuple.object.Pair;
 import soot.*;
+import soot.jimple.Stmt;
 import soot.jimple.FieldRef;
 import soot.jimple.GotoStmt;
 import soot.jimple.IfStmt;
@@ -33,6 +34,8 @@ import soot.jimple.internal.JNewArrayExpr;
 import soot.jimple.internal.JNewExpr;
 import soot.jimple.internal.JNewMultiArrayExpr;
 import soot.jimple.internal.JSpecialInvokeExpr;
+import soot.tagkit.SourceFileTag;
+import soot.tagkit.LineNumberTag;
 import soot.toolkits.graph.Block;
 import soot.util.Chain;
 
@@ -412,16 +415,22 @@ public class SootUtilities {
 	 */
 	public static Local[] getMethArgLocals(SootMethod m){
 		int numLocals = m.getParameterCount();
-		List<Local> regs = m.getActiveBody().getParameterLocals();
-		if(!m.isStatic()) {
-			numLocals++; // Done to consider the "this" parameter passed
-			regs.add(0,m.getActiveBody().getThisLocal());
-		}
-		Local[] locals = new Local[numLocals];
-		for(int i=0;i<regs.size();i++){
-			locals[i] = regs.get(i);
-		}
-		return locals;
+		List<Local> regs;
+		try{ 
+			regs= m.getActiveBody().getParameterLocals(); 
+			if(!m.isStatic()) {
+				numLocals++; // Done to consider the "this" parameter passed
+				regs.add(0,m.getActiveBody().getThisLocal());
+			}
+			Local[] locals = new Local[numLocals];
+			for(int i=0;i<regs.size();i++){
+				locals[i] = regs.get(i);
+			}
+			return locals;
+		} catch(RuntimeException e){ 
+			System.out.println("Method body not found for method: "+m.getSignature()); 
+		};
+		return null;
 	}
 	
 	/*
@@ -445,6 +454,27 @@ public class SootUtilities {
 		return regs;
 	}
 	
+	/*
+	 * 	Returns the local variable returned by method m 
+	 *	Returns null if method does not have a return statement or returns a constant
+	 */
+	public static Local getReturnLocal(SootMethod m){
+		try{
+			Body body = m.retrieveActiveBody();
+			for(Unit unit : body.getUnits()){
+				Stmt s = (Stmt) unit;
+				if(s instanceof ReturnStmt){
+					Immediate retOp = (Immediate) ((ReturnStmt) s).getOp();
+					if(retOp instanceof Local)
+						return (Local)retOp;
+				}
+			}
+		}catch(RuntimeException e){ 
+			System.out.println("Method body not found for method: "+m.getSignature()); 
+			};
+		return null;
+	}
+	
 	public static int getBCI(Unit u){
 		try{
 			BytecodeOffsetTag bci = (BytecodeOffsetTag)u.getTag("BytecodeOffsetTag");
@@ -453,6 +483,24 @@ public class SootUtilities {
 			if (Config.verbose >= 2)
 				System.out.println("WARN: SootUtilities cannot get BCI"+u);
 		}
+		return -1;
+	}
+	
+	/*
+	 * Returns source file of class c if it exists; returns empty string otherwise
+	 */
+	public static String getSourceFile(SootClass c){
+		if(c.hasTag("SourceFileTag"))
+			return ((SourceFileTag)c.getTag("SourceFileTag")).getSourceFile();
+		return "";
+	}
+	
+	/*
+	 * Returns line number of unit u if it exists; returns empty string otherwise
+	 */
+	public static int getLineNumber(Unit u){
+		if(u.hasTag("LineNumberTag"))
+			return ((LineNumberTag)u.getTag("LineNumberTag")).getLineNumber();
 		return -1;
 	}
 	
